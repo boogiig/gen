@@ -225,6 +225,13 @@ func main() {
 			os.Exit(1)
 			return
 		}
+		dbViews, viewerr := schema.ViewNames(db)
+		if viewerr != nil {
+			fmt.Print(au.Red(fmt.Sprintf("Error in fetching views information from %s information schema from %s\n", *sqlType, *sqlConnStr)))
+			os.Exit(1)
+			return
+		}
+		dbTables = append(dbTables, dbViews...)
 	}
 
 	if strings.HasPrefix(*modelNamingTemplate, "'") && strings.HasSuffix(*modelNamingTemplate, "'") {
