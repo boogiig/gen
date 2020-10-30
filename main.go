@@ -94,6 +94,7 @@ var (
 
 	baseTemplates *packr.Box
 	tableInfos    map[string]*dbmeta.ModelInfo
+	queryInfos    map[string]*dbmeta.ModelInfo
 	au            aurora.Aurora
 )
 
@@ -155,6 +156,7 @@ func main() {
 	au = aurora.NewAurora(!*noColorOutput)
 	dbmeta.InitColorOutput(au)
 
+	dbmeta.Queries = make(map[string]*dbmeta.QueryMapping)
 	baseTemplates = packr.New("gen", "./template")
 
 	if *saveTemplateDir != "" {
@@ -264,6 +266,13 @@ func main() {
 		}
 	}
 
+	err = loadQueryMappings(conf)
+	if err != nil {
+		fmt.Print(au.Red(fmt.Sprintf("Error processing query mapping file error: %v\n", err)))
+		os.Exit(1)
+		return
+	}
+
 	if *contextFileName != "" {
 		err = loadContextMapping(conf)
 		if err != nil {
@@ -274,6 +283,10 @@ func main() {
 	}
 
 	tableInfos = dbmeta.LoadTableInfo(db, dbTables, excludeDbTables, conf)
+	queryInfos := dbmeta.LoadQueryInfo(db, conf)
+	for key, value := range queryInfos {
+		tableInfos[key] = value
+	}
 
 	if len(tableInfos) == 0 {
 		fmt.Print(au.Red(fmt.Sprintf("No tables loaded\n")))
@@ -419,6 +432,21 @@ func loadDefaultDBMappings(conf *dbmeta.Config) error {
 	}
 
 	err = dbmeta.ProcessMappings("internal", content, conf.Verbose)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadQueryMappings(conf *dbmeta.Config) error {
+	var err error
+	var content []byte
+	content, err = baseTemplates.Find("queries.json")
+	if err != nil {
+		return err
+	}
+
+	err = dbmeta.ProcessQueryMappings("internal", content, conf.Verbose)
 	if err != nil {
 		return err
 	}

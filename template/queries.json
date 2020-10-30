@@ -1,0 +1,9 @@
+{
+  "queries": [
+    {
+      "table_name": "sys_user",
+      "query_name": "qry_sys_user_all",
+      "query": "select * from sys_user"
+    }
+  ]
+}

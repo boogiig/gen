@@ -139,7 +139,7 @@ func (c *Config) GetTemplate(genTemplate *GenTemplate) (*template.Template, erro
 		baseName == "code_dao_gorm.md.tmpl" ||
 		baseName == "code_http.md.tmpl" {
 
-		operations := []string{"add", "delete", "get", "getall", "update"}
+		operations := []string{"add", "delete", "get", "getall", "update", "getquery"}
 		for _, op := range operations {
 			var filename string
 			if baseName == "api.go.tmpl" {

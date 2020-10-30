@@ -20,7 +20,10 @@ import (
 
 type metaDataLoader func(db *sql.DB, sqlType, sqlDatabase, tableName string) (DbTableMeta, error)
 
+type metaQueryLoader func(db *sql.DB, sqlType, sqlDatabase string, queryMapping *QueryMapping) (DbTableMeta, error)
+
 var metaDataFuncs = make(map[string]metaDataLoader)
+var metaQueryFuncs = make(map[string]metaQueryLoader)
 var sqlMappings = make(map[string]*SQLMapping)
 
 func init() {
@@ -29,6 +32,29 @@ func init() {
 	metaDataFuncs["mssql"] = LoadMsSQLMeta
 	metaDataFuncs["postgres"] = LoadPostgresMeta
 	metaDataFuncs["mysql"] = LoadMysqlMeta
+
+	metaQueryFuncs["sqlite3"] = LoadQueryMeta
+	metaQueryFuncs["sqlite"] = LoadQueryMeta
+	metaQueryFuncs["mssql"] = LoadQueryMeta
+	metaQueryFuncs["postgres"] = LoadQueryMeta
+	metaQueryFuncs["mysql"] = LoadQueryMeta
+}
+
+// QueryMappings mappings for query to json, go etc
+type QueryMappings struct {
+	QueryMappings []*QueryMapping `json:"queries"`
+}
+
+// QueryMapping mapping
+type QueryMapping struct {
+	// TableName
+	TableName string `json:"table_name"`
+
+	// QueryName
+	QueryName string `json:"query_name"`
+
+	// Query
+	Query string `json:"query"`
 }
 
 // SQLMappings mappings for sql types to json, go etc
@@ -254,6 +280,8 @@ type ModelInfo struct {
 	DBMeta          DbTableMeta
 	Instance        interface{}
 	CodeFields      []*FieldInfo
+	IsQuery         bool
+	Query           string
 }
 
 // Notes notes on table generation
@@ -313,6 +341,20 @@ func LoadMeta(sqlType string, db *sql.DB, sqlDatabase, tableName string) (DbTabl
 	}
 
 	dbMeta, err := dbMetaFunc(db, sqlType, sqlDatabase, tableName)
+	//if err != nil {
+	//	fmt.Printf("Error calling func: %s error: %v\n", GetFunctionName(dbMetaFunc), err)
+	//}
+	return dbMeta, err
+}
+
+// LoadQMeta loads the DbTableMeta data from the db connection for the table
+func LoadQMeta(sqlType string, db *sql.DB, sqlDatabase string, queryMapping *QueryMapping) (DbTableMeta, error) {
+	dbQueryFunc, _ := metaQueryFuncs[sqlType]
+	// if !haveMeta {
+	// 	dbQueryFunc = LoadUnknownMeta
+	// }
+
+	dbMeta, err := dbQueryFunc(db, sqlType, sqlDatabase, queryMapping)
 	//if err != nil {
 	//	fmt.Printf("Error calling func: %s error: %v\n", GetFunctionName(dbMetaFunc), err)
 	//}
@@ -557,6 +599,26 @@ func ProcessMappings(source string, mappingJsonstring []byte, verbose bool) erro
 	return nil
 }
 
+// ProcessQueryMappings process the json for mappings to load sql mappings
+func ProcessQueryMappings(source string, mappingJsonstring []byte, verbose bool) error {
+	var mappings = &QueryMappings{}
+	err := json.Unmarshal(mappingJsonstring, mappings)
+	if err != nil {
+		fmt.Printf("Error unmarshalling json error: %v\n", err)
+		return err
+	}
+
+	if verbose {
+		fmt.Printf("Loaded %d query mappings from: %s\n", len(mappings.QueryMappings), source)
+	}
+	for _, value := range mappings.QueryMappings {
+		fmt.Printf("%v\n", value)
+		Queries[value.QueryName] = value
+	}
+
+	return nil
+}
+
 // LoadMappings load sql mappings to load mapping json file
 func LoadMappings(mappingFileName string, verbose bool) error {
 	mappingFile, err := os.Open(mappingFileName)
@@ -580,6 +642,31 @@ func LoadMappings(mappingFileName string, verbose bool) error {
 	}
 
 	return ProcessMappings(absPath, byteValue, verbose)
+}
+
+// LoadQueryMappings load sql mappings to load mapping json file
+func LoadQueryMappings(mappingFileName string, verbose bool) error {
+	mappingFile, err := os.Open(mappingFileName)
+	if err != nil {
+		fmt.Printf("Error loading query mapping file %s error: %v\n", mappingFileName, err)
+		return err
+	}
+
+	defer func() {
+		_ = mappingFile.Close()
+	}()
+	byteValue, err := ioutil.ReadAll(mappingFile)
+	if err != nil {
+		fmt.Printf("Error loading query mapping file %s error: %v\n", mappingFileName, err)
+		return err
+	}
+
+	absPath, err := filepath.Abs(mappingFileName)
+	if err != nil {
+		absPath = mappingFileName
+	}
+
+	return ProcessQueryMappings(absPath, byteValue, verbose)
 }
 
 // SQLTypeToGoType map a sql type to a go type
@@ -796,6 +883,7 @@ func GenerateModelInfo(tables map[string]*ModelInfo, dbMeta DbTableMeta,
 		CodeFields:      fields,
 		DBMeta:          dbMeta,
 		Instance:        instance,
+		IsQuery:         false,
 	}
 
 	return modelInfo, nil
