@@ -612,7 +612,7 @@ func ProcessQueryMappings(source string, mappingJsonstring []byte, verbose bool)
 		fmt.Printf("Loaded %d query mappings from: %s\n", len(mappings.QueryMappings), source)
 	}
 	for _, value := range mappings.QueryMappings {
-		fmt.Printf("%v\n", value)
+		// fmt.Printf("%v\n", value)
 		Queries[value.QueryName] = value
 	}
 

@@ -52,6 +52,7 @@ var (
 
 	contextFileName  = goopt.String([]string{"--context"}, "", "context file (json) to populate context with")
 	mappingFileName  = goopt.String([]string{"--mapping"}, "", "mapping file (json) to map sql types to golang/protobuf etc")
+	queriesFileName  = goopt.String([]string{"--queries"}, "", "query mapping file (json) to map sql types to golang/protobuf etc")
 	execCustomScript = goopt.String([]string{"--exec"}, "", "execute script for custom code generation")
 
 	addJSONAnnotation = goopt.Flag([]string{"--json"}, []string{"--no-json"}, "Add json annotations (default)", "Disable json annotations")
@@ -271,6 +272,15 @@ func main() {
 		fmt.Print(au.Red(fmt.Sprintf("Error processing query mapping file error: %v\n", err)))
 		os.Exit(1)
 		return
+	}
+
+	if *queriesFileName != "" {
+		err := dbmeta.LoadQueryMappings(*queriesFileName, *verbose)
+		if err != nil {
+			fmt.Print(au.Red(fmt.Sprintf("Error loading mappings file %s error: %v\n", *queriesFileName, err)))
+			os.Exit(1)
+			return
+		}
 	}
 
 	if *contextFileName != "" {
