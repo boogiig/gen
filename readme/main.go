@@ -168,12 +168,14 @@ func initialize(conf *dbmeta.Config) {
 
 	conf.AddJSONAnnotation = true
 	conf.AddXMLAnnotation = true
+	conf.AddYAMLAnnotation = true
 	conf.AddGormAnnotation = true
 	conf.AddProtobufAnnotation = true
 	conf.AddDBAnnotation = true
 	conf.UseGureguTypes = false
 	conf.JSONNameFormat = "snake"
 	conf.XMLNameFormat = "snake"
+	conf.YAMLNameFormat = "snake"
 	conf.ProtobufNameFormat = ""
 	conf.Verbose = false
 	conf.OutDir = outDir

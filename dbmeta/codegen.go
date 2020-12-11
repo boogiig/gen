@@ -883,10 +883,12 @@ type Config struct {
 	AddGormAnnotation     bool
 	AddProtobufAnnotation bool
 	AddXMLAnnotation      bool
+	AddYAMLAnnotation     bool
 	AddDBAnnotation       bool
 	UseGureguTypes        bool
 	JSONNameFormat        string
 	XMLNameFormat         string
+	YAMLNameFormat        string
 	ProtobufNameFormat    string
 	DaoPackageName        string
 	DaoFQPN               string
@@ -953,12 +955,14 @@ func NewConfig(templateLoader TemplateLoader) *Config {
 
 	conf.AddJSONAnnotation = true
 	conf.AddXMLAnnotation = true
+	conf.AddYAMLAnnotation = true
 	conf.AddGormAnnotation = true
 	conf.AddProtobufAnnotation = true
 	conf.AddDBAnnotation = true
 	conf.UseGureguTypes = false
 	conf.JSONNameFormat = "snake"
 	conf.XMLNameFormat = "snake"
+	conf.YAMLNameFormat = "snake"
 	conf.ProtobufNameFormat = "snake"
 	conf.Verbose = false
 	conf.OutDir = outDir

@@ -16,8 +16,8 @@ message Result {
         Success = 1;
     }
 
-    result_type code = 1 [(gogoproto.customname) = 'Code', (gogoproto.moretags) = 'json:"code" xml:"code" db:"code"'];
-    string message = 2 [(gogoproto.customname) = 'Message', (gogoproto.moretags) = 'json:"message" xml:"message" db:"message"'];
+    result_type code = 1 [(gogoproto.customname) = 'Code', (gogoproto.moretags) = 'json:"code" xml:"code" yaml:"code" db:"code"'];
+    string message = 2 [(gogoproto.customname) = 'Message', (gogoproto.moretags) = 'json:"message" xml:"message" yaml:"message" db:"message"'];
 }
 
 

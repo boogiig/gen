@@ -45,6 +45,7 @@ var commonInitialisms = map[string]bool{
 	"UTF8":  true,
 	"VM":    true,
 	"XML":   true,
+	"YAML":  true,
 	"ACL":   true,
 }
 

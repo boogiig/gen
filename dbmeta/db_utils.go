@@ -47,7 +47,7 @@ func GenerateDeleteSQL(dbTable DbTableMeta) (string, error) {
 	}
 
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("DELETE FROM `%s` where", dbTable.TableName()))
+	buf.WriteString(fmt.Sprintf("DELETE FROM %s where", dbTable.TableName()))
 
 	addedKey := 1
 	for _, col := range dbTable.Columns() {
@@ -74,7 +74,7 @@ func GenerateUpdateSQL(dbTable DbTableMeta) (string, error) {
 	}
 
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("UPDATE `%s` set", dbTable.TableName()))
+	buf.WriteString(fmt.Sprintf("UPDATE %s set", dbTable.TableName()))
 
 	setCol := 1
 	for _, col := range dbTable.Columns() {
@@ -115,11 +115,11 @@ func GenerateInsertSQL(dbTable DbTableMeta) (string, error) {
 	}
 
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("INSERT INTO `%s` (", dbTable.TableName()))
+	buf.WriteString(fmt.Sprintf("INSERT INTO %s (", dbTable.TableName()))
 
 	pastFirst := false
 	for _, col := range dbTable.Columns() {
-		if !col.IsAutoIncrement() {
+		if !col.IsAutoIncrement() && !col.IsPrimaryKey() {
 			if pastFirst {
 				buf.WriteString(", ")
 			}
@@ -133,7 +133,7 @@ func GenerateInsertSQL(dbTable DbTableMeta) (string, error) {
 	pastFirst = false
 	pos := 1
 	for _, col := range dbTable.Columns() {
-		if !col.IsAutoIncrement() {
+		if !col.IsAutoIncrement() && !col.IsPrimaryKey() {
 			if pastFirst {
 				buf.WriteString(", ")
 			}
@@ -157,7 +157,7 @@ func GenerateSelectOneSQL(dbTable DbTableMeta) (string, error) {
 	}
 
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("SELECT * FROM `%s` WHERE ", dbTable.TableName()))
+	buf.WriteString(fmt.Sprintf("SELECT * FROM %s WHERE ", dbTable.TableName()))
 
 	pastFirst := false
 	pos := 1
@@ -184,6 +184,6 @@ func GenerateSelectMultiSQL(dbTable DbTableMeta) (string, error) {
 	}
 
 	buf := bytes.Buffer{}
-	buf.WriteString(fmt.Sprintf("SELECT * FROM `%s`", dbTable.TableName()))
+	buf.WriteString(fmt.Sprintf("SELECT * FROM %s", dbTable.TableName()))
 	return buf.String(), nil
 }

@@ -61,6 +61,9 @@ var (
 	addXMLAnnotation = goopt.Flag([]string{"--xml"}, []string{"--no-xml"}, "Add xml annotations (default)", "Disable xml annotations")
 	xmlNameFormat    = goopt.String([]string{"--xml-fmt"}, "snake", "xml name format [snake | camel | lower_camel | none]")
 
+	addYAMLAnnotation = goopt.Flag([]string{"--yaml"}, []string{"--no-yaml"}, "Add yaml annotations (default)", "Disable yaml annotations")
+	yamlNameFormat    = goopt.String([]string{"--yaml-fmt"}, "snake", "yaml name format [snake | camel | lower_camel | none]")
+
 	addGormAnnotation     = goopt.Flag([]string{"--gorm"}, []string{}, "Add gorm annotations (tags)", "")
 	addProtobufAnnotation = goopt.Flag([]string{"--protobuf"}, []string{}, "Add protobuf annotations (tags)", "")
 	protoNameFormat       = goopt.String([]string{"--proto-fmt"}, "snake", "proto name format [snake | camel | lower_camel | none]")
@@ -115,14 +118,6 @@ git fetch up
 	goopt.Parse(nil)
 }
 
-func saveTemplates() {
-	fmt.Printf("Saving templates to %s\n", *saveTemplateDir)
-	err := SaveAssets(*saveTemplateDir, baseTemplates)
-	if err != nil {
-		fmt.Printf("Error saving: %v\n", err)
-	}
-
-}
 func listTemplates() {
 	for i, file := range baseTemplates.List() {
 		fmt.Printf("   [%d] [%s]\n", i, file)
@@ -379,12 +374,14 @@ func initialize(conf *dbmeta.Config) {
 
 	conf.AddJSONAnnotation = *addJSONAnnotation
 	conf.AddXMLAnnotation = *addXMLAnnotation
+	conf.AddYAMLAnnotation = *addYAMLAnnotation
 	conf.AddGormAnnotation = *addGormAnnotation
 	conf.AddProtobufAnnotation = *addProtobufAnnotation
 	conf.AddDBAnnotation = *addDBAnnotation
 	conf.UseGureguTypes = *useGureguTypes
 	conf.JSONNameFormat = *jsonNameFormat
 	conf.XMLNameFormat = *xmlNameFormat
+	conf.YAMLNameFormat = *yamlNameFormat
 	conf.ProtobufNameFormat = *protoNameFormat
 	conf.Verbose = *verbose
 	conf.OutDir = *outDir
@@ -430,6 +427,7 @@ func initialize(conf *dbmeta.Config) {
 
 	conf.JSONNameFormat = strings.ToLower(conf.JSONNameFormat)
 	conf.XMLNameFormat = strings.ToLower(conf.XMLNameFormat)
+	conf.YAMLNameFormat = strings.ToLower(conf.YAMLNameFormat)
 	conf.ProtobufNameFormat = strings.ToLower(conf.ProtobufNameFormat)
 }
 
@@ -538,6 +536,7 @@ func generate(conf *dbmeta.Config) error {
 
 	*jsonNameFormat = strings.ToLower(*jsonNameFormat)
 	*xmlNameFormat = strings.ToLower(*xmlNameFormat)
+	*yamlNameFormat = strings.ToLower(*yamlNameFormat)
 	modelDir := filepath.Join(*outDir, *modelPackageName)
 	apiDir := filepath.Join(*outDir, *apiPackageName)
 	daoDir := filepath.Join(*outDir, *daoPackageName)
@@ -618,6 +617,7 @@ func generate(conf *dbmeta.Config) error {
 
 	*jsonNameFormat = strings.ToLower(*jsonNameFormat)
 	*xmlNameFormat = strings.ToLower(*xmlNameFormat)
+	*yamlNameFormat = strings.ToLower(*yamlNameFormat)
 
 	// generate go files for each table
 	for tableName, tableInfo := range tableInfos {
@@ -1044,6 +1044,10 @@ func regenCmdLine() []string {
 	if *addXMLAnnotation {
 		cmdLine = append(cmdLine, fmt.Sprintf(" --xml"))
 		cmdLine = append(cmdLine, fmt.Sprintf(" --xml-fmt=%s", *xmlNameFormat))
+	}
+	if *addYAMLAnnotation {
+		cmdLine = append(cmdLine, fmt.Sprintf(" --yaml"))
+		cmdLine = append(cmdLine, fmt.Sprintf(" --yaml-fmt=%s", *yamlNameFormat))
 	}
 	if *addGormAnnotation {
 		cmdLine = append(cmdLine, fmt.Sprintf(" --gorm"))

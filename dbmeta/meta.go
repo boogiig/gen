@@ -324,6 +324,7 @@ type FieldInfo struct {
 	GormAnnotation        string
 	JSONAnnotation        string
 	XMLAnnotation         string
+	YAMLAnnotation        string
 	DBAnnotation          string
 	GoGoMoreTags          string
 }
@@ -385,6 +386,7 @@ func (c *Config) GenerateFieldsTypes(dbMeta DbTableMeta) ([]*FieldInfo, error) {
 		fi.GormAnnotation = createGormAnnotation(col)
 		fi.JSONAnnotation = createJSONAnnotation(c.JSONNameFormat, col)
 		fi.XMLAnnotation = createXMLAnnotation(c.XMLNameFormat, col)
+		fi.YAMLAnnotation = createYAMLAnnotation(c.YAMLNameFormat, col)
 		fi.DBAnnotation = createDBAnnotation(col)
 
 		var annotations []string
@@ -400,11 +402,15 @@ func (c *Config) GenerateFieldsTypes(dbMeta DbTableMeta) ([]*FieldInfo, error) {
 			annotations = append(annotations, fi.XMLAnnotation)
 		}
 
+		if c.AddYAMLAnnotation {
+			annotations = append(annotations, fi.YAMLAnnotation)
+		}
+
 		if c.AddDBAnnotation {
 			annotations = append(annotations, fi.DBAnnotation)
 		}
 
-		gogoTags := []string{fi.GormAnnotation, fi.JSONAnnotation, fi.XMLAnnotation, fi.DBAnnotation}
+		gogoTags := []string{fi.GormAnnotation, fi.JSONAnnotation, fi.XMLAnnotation, fi.YAMLAnnotation, fi.DBAnnotation}
 		GoGoMoreTags := strings.Join(gogoTags, " ")
 
 		if c.AddProtobufAnnotation {
@@ -500,6 +506,25 @@ func createJSONAnnotation(nameFormat string, c ColumnMeta) string {
 func createXMLAnnotation(nameFormat string, c ColumnMeta) string {
 	name := formatFieldName(nameFormat, c.Name())
 	return fmt.Sprintf("xml:\"%s\"", name)
+}
+
+func createYAMLAnnotation(nameFormat string, c ColumnMeta) string {
+	name := formatFieldName(nameFormat, c.Name())
+	return fmt.Sprintf("yaml:\"%s\"", name) + " " + createSwaggerAnnotation(c)
+}
+
+func createSwaggerAnnotation(c ColumnMeta) string {
+	tt, _ := SQLTypeToSwaggerType(strings.ToLower(c.DatabaseTypeName()))
+	return fmt.Sprintf("swaggertype:\"%s\"", tt)
+}
+
+// SQLTypeToSwaggerType map a sql type to a protobuf type
+func SQLTypeToSwaggerType(sqlType string) (string, error) {
+	mapping, err := SQLTypeToMapping(sqlType)
+	if err != nil {
+		return "", err
+	}
+	return mapping.SwaggerType, nil
 }
 
 func createDBAnnotation(c ColumnMeta) string {
@@ -676,7 +701,7 @@ func SQLTypeToGoType(sqlType string, nullable bool, gureguTypes bool) (string, e
 		return "", err
 	}
 
-	if nullable && gureguTypes {
+	if gureguTypes {
 		return mapping.GureguType, nil
 	} else if nullable {
 		return mapping.GoNullableType, nil
